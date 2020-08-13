@@ -8,6 +8,8 @@ namespace TPC_CharacterController
 {
     public abstract class AgentState
     {
+        public StateName agentStateName;
+
         public enum Stage
         {
             Enter, Update, Exit
@@ -68,6 +70,7 @@ namespace TPC_CharacterController
 
         public IdleAgent(Transform playerTransform, NavMeshAgent agent, AnimationController animationController) : base(playerTransform, agent, animationController)
         {
+            agentStateName = StateName.Idle;
         }
 
         public override void Enter()
@@ -117,11 +120,11 @@ namespace TPC_CharacterController
 
                             if (angle > 0)
                             {
-                                animationController.TurnAxis(-angle * Time.deltaTime, 0);
+                                animationController.TurnAxis(-angle * Time.deltaTime * 10, 0);
                             }
                             else
                             {
-                                animationController.TurnAxis(angle * Time.deltaTime, 0);
+                                animationController.TurnAxis(angle * Time.deltaTime * 10, 0);
                             }
                         }
                     }
@@ -135,11 +138,11 @@ namespace TPC_CharacterController
 
                             if (angle > 0)
                             {
-                                animationController.TurnAxis(-angle * Time.deltaTime, 0);
+                                animationController.TurnAxis(-angle * Time.deltaTime * 10, 0);
                             }
                             else
                             {
-                                animationController.TurnAxis(angle * Time.deltaTime, 0);
+                                animationController.TurnAxis(angle * Time.deltaTime * 10, 0);
                             }
 
                         }
@@ -160,44 +163,6 @@ namespace TPC_CharacterController
                     }
                 }
             }
-            /*
-            if (PlayerFarAway())
-            {
-                nextAgentState = new RunAgent(base.agentTransform, base.navMeshagent, base.animationController);
-                Exit();
-            }
-            else if (PlayerInAttackableDistance())
-            {
-                if (base.agentPlayer.IsLookAtTarget())
-                {
-                    if (base.agentPlayer.ShouldAttack())
-                    {
-                        nextAgentState = GetRandomAttack();
-
-                        Exit();
-                    }
-                    else if (base.agentPlayer.ShouldDefence())
-                    {
-                        nextAgentState = new DefenceAgent(base.agentTransform, base.navMeshagent, base.animationController);
-
-                        Exit();
-                    }
-                }
-                else
-                {
-                    Vector2 lookAtDirectionAxis = base.agentPlayer.GetLookAtDirection();
-
-                    animationController.TurnAxis(lookAtDirectionAxis.x, lookAtDirectionAxis.y);
-                }
-            }
-        }
-        else
-        {
-            Debug.Log("Target yok");
-        }
-        */
-
-
 
         }
 
@@ -223,6 +188,7 @@ namespace TPC_CharacterController
     {
         public RunAgent(Transform playerTransform, NavMeshAgent agent, AnimationController animationController) : base(playerTransform, agent, animationController)
         {
+            agentStateName = StateName.Run;
         }
 
         public override void Enter()
@@ -282,7 +248,7 @@ namespace TPC_CharacterController
 
         public DefenceAgent(Transform playerTransform, NavMeshAgent agent, AnimationController animationController) : base(playerTransform, agent, animationController)
         {
-
+            agentStateName = StateName.Defence;
         }
 
         public override void Enter()
@@ -323,22 +289,6 @@ namespace TPC_CharacterController
                 }
                 else if (!InSecure())
                 {
-                    /*
-                    if (base.agentPlayer.ShouldEscapeAttack())
-                    {
-                        Vector2 directionToEscape = base.agentPlayer.GetBestEscapeDirection();
-
-                        directionToEscape = directionToEscape.normalized;
-
-                        animationController.LeftAxis(directionToEscape.x, directionToEscape.y);
-
-                    }
-                    else if (!base.PlayerFarAway())
-                    {
-                        //nextAgentState = new RunAgent();
-
-                    }
-                    */
                     if (rolled == true)
                     {
                         rollingTime += Time.deltaTime;
@@ -349,10 +299,10 @@ namespace TPC_CharacterController
                         {
                             animationController.RollTrigger();
 
-                            //Get BEst escape point from player
                             animationController.LeftAxis(0, -1);
 
                             rollingTime = 0;
+
                             rolled = true;
                         }
                     }
@@ -377,28 +327,39 @@ namespace TPC_CharacterController
     {
         public AgentAttackR(Transform playerTransform, NavMeshAgent agent, AnimationController animationController) : base(playerTransform, agent, animationController)
         {
+            agentStateName = StateName.AttackR;
         }
 
         public override void Enter()
         {
-            base.Enter();
-        }
+            animationController.AttackR(true);
 
-        public override void Exit()
-        {
-            base.Exit();
+            Enter();
         }
 
         public override void Update()
         {
-            base.Update();
+            if (!base.agentPlayer.ShouldAttack())
+            {
+                nextAgentState = new IdleAgent(base.agentTransform, base.navMeshagent, base.animationController);
+
+                Exit();
+            }
         }
+
+        public override void Exit()
+        {
+            animationController.AttackR(true);
+            base.Exit();
+        }
+
     }
 
     public class AgentAttackL : AgentState
     {
         public AgentAttackL(Transform playerTransform, NavMeshAgent agent, AnimationController animationController) : base(playerTransform, agent, animationController)
         {
+            agentStateName = StateName.AttackL;
         }
 
         public override void Enter()
@@ -409,10 +370,7 @@ namespace TPC_CharacterController
 
         public override void Update()
         {
-
-            Debug.Log("Şuan saldıryor");
-
-            if (!SightOfAttack())
+            if (!base.agentPlayer.ShouldAttack())
             {
                 nextAgentState = new IdleAgent(base.agentTransform, base.navMeshagent, base.animationController);
 
@@ -420,18 +378,13 @@ namespace TPC_CharacterController
             }
         }
 
-
         public override void Exit()
         {
             base.Exit();
         }
 
 
-
-        public bool SightOfAttack()
-        {
-            return base.agentPlayer.inAttackSight;
-        }
+       
     }
 }
 

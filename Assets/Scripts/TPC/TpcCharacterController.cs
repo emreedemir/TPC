@@ -24,6 +24,9 @@ namespace TPC_CharacterController
 
         public Vector3 focusPoint;
 
+        private void Awake()
+        {
+        }
 
         private void Start()
         {

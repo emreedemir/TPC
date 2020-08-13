@@ -25,19 +25,8 @@ namespace TPC_CharacterController
 
         Transform target;
 
-        private bool shouldDefence;
-
-        private bool shouldAttack;
-
-        private bool shouldEscapeAttack;
 
         private bool beFree;
-
-        private bool isNearTarget;
-
-        private bool isLookAtTarget;
-
-        public bool inAttackSight;
 
         public float attackDistance = 5;
 
@@ -68,11 +57,6 @@ namespace TPC_CharacterController
             agentState = new IdleAgent(this.transform, this.agent, this.animationController);
         }
 
-        private void HandleAttackSight(bool sightState)
-        {
-            inAttackSight = sightState;
-        }
-
         IEnumerator TargetCoroutine()
         {
 
@@ -85,10 +69,19 @@ namespace TPC_CharacterController
         {
             agentState = agentState.Process();
 
+            Debug.Log(agentState.agentStateName);
+
             if (target != null)
             {
                 HandleLineOfSight();
             }
+
+            DrawCircle2DGizmos(transform.position, 3, Color.red);
+
+            DrawCircle2DGizmos(transform.position, 5, Color.blue);
+
+            DrawCircle2DGizmos(transform.position, 10, Color.green);
+
         }
 
         public void HandleLineOfSight()
@@ -172,16 +165,6 @@ namespace TPC_CharacterController
             return target != null;
         }
 
-        public bool AttackablePosition()
-        {
-            return false;
-        }
-
-        public void LookAtTarget()
-        {
-
-        }
-
         public Transform GetTarget()
         {
             return FindObjectOfType<TpcCharacterController>().transform;
@@ -196,7 +179,20 @@ namespace TPC_CharacterController
 
         public bool ShouldDefence()
         {
-            return shouldDefence;
+            if (target != null)
+            {
+                StateName stateName = target.GetComponent<TpcCharacterController>().state.currentStateName;
+
+                if (stateName == StateName.AttackL || stateName == StateName.AttackR)
+                {
+                    return true;
+                }
+                return false;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public bool IsLookAtTarget()
@@ -239,12 +235,18 @@ namespace TPC_CharacterController
 
         public bool ShouldAttack()
         {
-            return shouldAttack;
+            if (target != null)
+                return target.GetComponent<TpcCharacterController>().state.currentStateName != StateName.Defence;
+
+            return false;
         }
 
         public bool ShouldEscapeAttack()
         {
-            return shouldEscapeAttack;
+            if (target != null)
+                return target.GetComponent<TpcCharacterController>().state.currentStateName == StateName.AttackL || target.GetComponent<TpcCharacterController>().state.currentStateName == StateName.AttackR;
+
+            return false;
         }
 
         public Vector2 GetBestEscapeDirection()
@@ -292,6 +294,27 @@ namespace TPC_CharacterController
                 return Vector3.Angle(direction, up);
             }
             return Mathf.Infinity;
+        }
+
+
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.red;
+
+            Gizmos.DrawWireSphere(transform.position, 3);
+
+            Gizmos.color = Color.blue;
+
+            Gizmos.DrawWireSphere(transform.position, 5);
+
+            Gizmos.color = Color.green;
+
+            Gizmos.DrawWireSphere(transform.position, 10);
+
+        }
+        public void DrawCircle2DGizmos(Vector3 centerPosition, int radius, Color color)
+        {
+
         }
     }
 }
